@@ -1,0 +1,23 @@
+DROP TABLE IF EXISTS books;
+DROP TABLE IF EXISTS users;
+DROP SEQUENCE IF EXISTS global_seq;
+
+CREATE SEQUENCE global_seq START 1;
+
+CREATE TABLE users
+(
+  id BIGINT PRIMARY KEY DEFAULT nextval('global_seq'),
+  name VARCHAR UNIQUE NOT NULL,
+  password VARCHAR NOT NULL,
+  role VARCHAR NOT NULL DEFAULT 'ROLE_USER'
+);
+
+CREATE TABLE books
+(
+  id BIGINT PRIMARY KEY DEFAULT nextval('global_seq'),
+  name VARCHAR NOT NULL,
+  isbn VARCHAR NOT NULL,
+  author VARCHAR NOT NULL,
+  user_id BIGINT,
+  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
+);
