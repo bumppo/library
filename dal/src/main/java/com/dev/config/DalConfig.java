@@ -2,10 +2,8 @@ package com.dev.config;
 
 import com.dev.entity.BookEntity;
 import com.dev.entity.UserEntity;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
-import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -24,16 +22,22 @@ import javax.sql.DataSource;
 @ComponentScan(basePackages = {"com.dev.repository"})
 public class DalConfig {
 
-    @Autowired
-    Environment env;
+    @Value("${postgres.driverClassName}") private String postgresDriver;
+    @Value("${postgres.url}") private String postgresURL;
+    @Value("${postgres.username}") private String postgresUsername;
+    @Value("${postgres.password}") private String postgresPassword;
+    @Value("${h2.init}") private String h2Init;
+    @Value("${h2.populate}") private String h2Populate;
+    @Value("${users.table}") private String usersTable;
+    @Value("${books.table}")private String booksTable;
 
     @Bean(destroyMethod="shutdown")
     @Profile("h2")
     public DataSource h2Source() {
         return new EmbeddedDatabaseBuilder()
                 .setType(EmbeddedDatabaseType.H2)
-                .addScript("classpath:db/initH2.sql")
-                .addScript("classpath:db/populateH2.sql")
+                .addScript(h2Init)
+                .addScript(h2Populate)
                 .build();
     }
 
@@ -41,12 +45,10 @@ public class DalConfig {
     @Profile("postgres")
     public DataSource postgresSource() {
         SingleConnectionDataSource dataSource = new SingleConnectionDataSource();
-
-        dataSource.setDriverClassName(env.getProperty("postgres.driverClassName"));
-        dataSource.setUrl(env.getProperty("postgres.url"));
-        dataSource.setUsername(env.getProperty("postgres.username"));
-        dataSource.setPassword(env.getProperty("postgres.password"));
-
+        dataSource.setDriverClassName(postgresDriver);
+        dataSource.setUrl(postgresURL);
+        dataSource.setUsername(postgresUsername);
+        dataSource.setPassword(postgresPassword);
         return dataSource;
     }
 
@@ -65,29 +67,25 @@ public class DalConfig {
     }
 
     @Bean
-    @Qualifier("userRowMapper")
     public BeanPropertyRowMapper userRowMapper(){
         return BeanPropertyRowMapper.newInstance(UserEntity.class);
     }
     @Bean
-    @Qualifier("bookRowMapper")
     public BeanPropertyRowMapper bookRowMapper(){
         return BeanPropertyRowMapper.newInstance(BookEntity.class);
     }
 
     @Bean
-    @Qualifier("insertUser")
     public SimpleJdbcInsert insertUser(DataSource dataSource){
         return new SimpleJdbcInsert(dataSource)
-                .withTableName("users")
+                .withTableName(usersTable)
                 .usingGeneratedKeyColumns("id")
                 .usingColumns("name", "password");
     }
     @Bean
-    @Qualifier("insertBook")
     public SimpleJdbcInsert insertBook(DataSource dataSource){
         return new SimpleJdbcInsert(dataSource)
-                .withTableName("books")
+                .withTableName(booksTable)
                 .usingGeneratedKeyColumns("id");
     }
 }

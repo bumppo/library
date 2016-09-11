@@ -3,6 +3,7 @@ package com.dev.repository.impl;
 import com.dev.entity.BookEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -18,6 +19,7 @@ import java.util.List;
 public class BookRepositoryImpl extends AbstractRepositoryImpl<BookEntity> implements BookRepository {
 
     private static final Integer COUNT_PER_PAGE = 5;
+    @Value("${books.table}") private String tableName;
 
     @Autowired
     public BookRepositoryImpl(@Qualifier("bookRowMapper") BeanPropertyRowMapper<BookEntity> rowMapper,
@@ -27,7 +29,7 @@ public class BookRepositoryImpl extends AbstractRepositoryImpl<BookEntity> imple
 
     @Override
     String getTableName() {
-        return "books";
+        return tableName;
     }
 
     @Override
@@ -38,13 +40,15 @@ public class BookRepositoryImpl extends AbstractRepositoryImpl<BookEntity> imple
             Number newKey = getJdbcInsert().executeAndReturnKey(parameterSource);
             bookEntity.setId(newKey.longValue());
         } else {
-            getNamedParameterJdbcTemplate().update("UPDATE books SET name=:name, isbn=:isbn, author=:author, user_id=:userId  WHERE id=:id", parameterSource);
+            String sql = "UPDATE books SET name=:name, isbn=:isbn, author=:author, user_id=:userId  WHERE id=:id";
+            getNamedParameterJdbcTemplate().update(sql, parameterSource);
         }
         return bookEntity;
     }
 
     @Override
     public List<BookEntity> getMore(int position) {
-        return getJdbcTemplate().query("SELECT * FROM books ORDER BY author LIMIT ?", getRowMapper(), position + COUNT_PER_PAGE);
+        String sql = SELECT + getTableName() + " ORDER BY author LIMIT ?";
+        return getJdbcTemplate().query(sql, getRowMapper(), position + COUNT_PER_PAGE);
     }
 }

@@ -14,6 +14,9 @@ import java.util.List;
 @Transactional(readOnly = true)
 public abstract class AbstractRepositoryImpl<E extends BaseEntity> implements AbstractRepository<E> {
 
+    static final String SELECT = "SELECT * FROM ";
+    static final String DELETE = "DELETE FROM ";
+
     private JdbcTemplate jdbcTemplate;
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private BeanPropertyRowMapper<E> rowMapper;
@@ -59,18 +62,21 @@ public abstract class AbstractRepositoryImpl<E extends BaseEntity> implements Ab
 
     @Override
     public List<E> getAll() {
-        return jdbcTemplate.query("SELECT * FROM " + getTableName(), rowMapper);
+        String sql = SELECT + getTableName();
+        return jdbcTemplate.query(sql, rowMapper);
     }
 
     @Override
     public E get(long id) {
-        return jdbcTemplate.queryForObject("SELECT * FROM " + getTableName() + " WHERE id=?", rowMapper, id);
+        String sql = SELECT + getTableName() + " WHERE id=?";
+        return jdbcTemplate.queryForObject(sql, rowMapper, id);
     }
 
     @Override
     @Transactional
     public void delete(long id) {
-        jdbcTemplate.update("DELETE FROM " + getTableName() + " WHERE id=?", id);
+        String sql = DELETE + getTableName() + " WHERE id=?";
+        jdbcTemplate.update(sql, id);
     }
 
 }
